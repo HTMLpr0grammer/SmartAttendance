@@ -175,7 +175,7 @@ From Section 12 of the manuscript:
 
 ## How it was built
 
-Most of the code, and much of the manuscript, was produced with an AI assistant (Claude by Anthropic) working from our requirements. We set the requirements and the design decisions, tested the system in a live class demonstration and defended it before our instructors. I am now studying the codebase so that I can explain and extend every part of it myself.
+The project was started with Gemini in Google Antigravity, which produced the initial project scaffolding. Claude by Anthropic then wrote most of the code, including the database models, the data structures and algorithms module, the tests and much of the manuscript, working from our specification. We, the authors, wrote the requirements, made the design decisions, tested the system in a live class demonstration and defended it before our Instructors.
 
 ## Authors
 
