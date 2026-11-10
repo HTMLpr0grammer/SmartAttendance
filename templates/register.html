@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Create account{% endblock %}
+{% block nav %}{% endblock %}
+{% block main_class %}w-full{% endblock %}
+
+{% block content %}
+<section class="relative isolate overflow-hidden">
+  <img src="{% static 'images/zdspgc.jpeg' %}" alt="" class="absolute inset-0 -z-20 h-full w-full object-cover object-[center_40%]">
+  <div class="absolute inset-0 -z-10 bg-gradient-to-b from-slate-950/85 to-brand-900/80"></div>
+  <div class="mx-auto flex max-w-3xl flex-col items-center px-4 pb-24 pt-10 text-center text-white">
+    <a href="{% url 'landing' %}"><img src="{% static 'images/zdspgc_logo.png' %}" alt="{{ SCHOOL_SHORT }} logo" class="h-20 w-20 rounded-full bg-white p-1 shadow-xl"></a>
+    <h1 class="mt-4 text-3xl font-extrabold">Join {{ APP_NAME }}</h1>
+    <p class="mt-2 text-sm text-white/80">Students are accepted immediately and verified when an instructor enrolls them. Instructor accounts require Superadmin approval.</p>
+  </div>
+</section>
+
+<div class="mx-auto -mt-16 max-w-3xl px-4 pb-16">
+  <form method="post" class="space-y-8 rounded-2xl bg-white p-6 shadow-xl ring-1 ring-slate-200 sm:p-8" novalidate id="register-form">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div>
+    {% endif %}
+
+    {# Role picker #}
+    <fieldset>
+      <legend class="text-sm font-semibold text-slate-900">I am registering as</legend>
+      <div class="mt-3 grid grid-cols-2 gap-3">
+        {% with current=form.role.value|default:"student" %}
+        <label class="relative flex cursor-pointer flex-col rounded-xl border-2 p-4 transition has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50 border-slate-200">
+          <input type="radio" name="role" value="student" class="sr-only" {% if current == "student" %}checked{% endif %}>
+          <span class="text-2xl">🎓</span>
+          <span class="mt-1 font-semibold text-slate-900">Student</span>
+          <span class="text-xs text-slate-500">Scan QR codes in class</span>
+        </label>
+        <label class="relative flex cursor-pointer flex-col rounded-xl border-2 p-4 transition has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50 border-slate-200">
+          <input type="radio" name="role" value="instructor" class="sr-only" {% if current == "instructor" %}checked{% endif %}>
+          <span class="text-2xl">🧑‍🏫</span>
+          <span class="mt-1 font-semibold text-slate-900">Instructor</span>
+          <span class="text-xs text-slate-500">Requires admin approval</span>
+        </label>
+        {% endwith %}
+      </div>
+    </fieldset>
+
+    {# Account #}
+    <div>
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-brand-700">Account</h2>
+      <div class="mt-3 grid gap-4 sm:grid-cols-2">
+        {% include "partials/_field.html" with field=form.first_name %}
+        {% include "partials/_field.html" with field=form.last_name %}
+        {% include "partials/_field.html" with field=form.email %}
+        {% include "partials/_field.html" with field=form.username %}
+        {% include "partials/_field.html" with field=form.password1 %}
+        {% include "partials/_field.html" with field=form.password2 %}
+      </div>
+    </div>
+
+    {# Student details #}
+    <div data-student-only>
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-brand-700">Student details</h2>
+      <div class="mt-3 grid gap-4 sm:grid-cols-2">
+        {% include "partials/_field.html" with field=form.student_id_number %}
+        {% include "partials/_field.html" with field=form.course_program %}
+        {% include "partials/_field.html" with field=form.year_level %}
+        <div class="hidden sm:block"></div>
+        {% include "partials/_field.html" with field=form.emergency_contact_name %}
+        {% include "partials/_field.html" with field=form.emergency_contact_number %}
+      </div>
+    </div>
+
+    {# Address #}
+    <div>
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-brand-700">Address</h2>
+      <div class="mt-3 grid gap-4 sm:grid-cols-2">
+        <div class="sm:col-span-2">{% include "partials/_field.html" with field=form.street_address %}</div>
+        {% include "partials/_field.html" with field=form.barangay %}
+        {% include "partials/_field.html" with field=form.city_municipality %}
+        {% include "partials/_field.html" with field=form.province %}
+        {% include "partials/_field.html" with field=form.postal_code %}
+      </div>
+    </div>
+
+    <div class="flex flex-col-reverse items-center justify-between gap-4 border-t border-slate-200 pt-6 sm:flex-row">
+      <p class="text-sm text-slate-600">Already registered? <a href="{% url 'login' %}" class="font-semibold text-brand-700 hover:underline">Sign in</a></p>
+      <button type="submit" class="w-full rounded-lg bg-brand-700 px-6 py-3 text-sm font-semibold text-white shadow hover:bg-brand-800 sm:w-auto">Create account</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    const form = document.getElementById('register-form');
+    const block = form.querySelector('[data-student-only]');
+    function sync() {
+      const role = form.querySelector('input[name="role"]:checked')?.value || 'student';
+      const isStudent = role === 'student';
+      block.classList.toggle('hidden', !isStudent);
+      block.querySelectorAll('input,select').forEach(el => {
+        if (['id_student_id_number', 'id_course_program'].includes(el.id)) el.required = isStudent;
+      });
+    }
+    form.querySelectorAll('input[name="role"]').forEach(r => r.addEventListener('change', sync));
+    sync();
+  })();
+</script>
+{% endblock %}

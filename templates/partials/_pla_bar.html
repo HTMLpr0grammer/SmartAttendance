@@ -1,0 +1,8 @@
+{# Present/Late/Absent stacked bar. Expects `s` = punctuality summary dict #}
+<div class="flex h-2.5 w-full overflow-hidden rounded-full bg-slate-100" title="Present {{ s.present }} · Late {{ s.late }} · Absent {{ s.absent }}">
+  {% if s.total %}
+  <div class="bg-emerald-500" style="width: {{ s.on_time_rate }}%"></div>
+  <div class="bg-amber-400" style="width: {{ s.late_rate }}%"></div>
+  <div class="bg-rose-500" style="width: {{ s.absent_rate }}%"></div>
+  {% endif %}
+</div>

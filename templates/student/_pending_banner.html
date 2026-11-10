@@ -1,0 +1,9 @@
+{% if user.is_pending %}
+<div class="mb-6 flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-900 shadow-sm">
+  <span class="mt-0.5 text-xl">⏳</span>
+  <div>
+    <p class="font-bold">Account Pending Verification: Awaiting enrollment from your instructor.</p>
+    <p class="mt-0.5 text-sm text-amber-800">You can still scan your class QR code — your instructor will see your scan and can add you to the class with one tap.</p>
+  </div>
+</div>
+{% endif %}

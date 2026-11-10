@@ -1,0 +1,28 @@
+{# Compact lifecycle action buttons for a user row. Expects `u` and optional `next`. #}
+<div class="inline-flex flex-wrap justify-end gap-1">
+  {% if u.is_active %}
+    {% if u.status == "pending" %}
+      <form method="post" action="{% url 'admin_user_action' u.pk %}">{% csrf_token %}<input type="hidden" name="action" value="approve"><input type="hidden" name="next" value="{{ next|default:request.get_full_path }}">
+        <button class="rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-700">Approve</button></form>
+    {% endif %}
+    {% if u.status == "suspended" %}
+      <form method="post" action="{% url 'admin_user_action' u.pk %}">{% csrf_token %}<input type="hidden" name="action" value="reactivate"><input type="hidden" name="next" value="{{ next|default:request.get_full_path }}">
+        <button class="rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100">Reactivate</button></form>
+    {% elif u.pk != user.pk %}
+      <form method="post" action="{% url 'admin_user_action' u.pk %}" data-confirm="{{ u }} will be blocked from logging in and scanning until reactivated." data-confirm-title="Suspend account?" data-confirm-ok="Suspend">{% csrf_token %}<input type="hidden" name="action" value="suspend"><input type="hidden" name="next" value="{{ next|default:request.get_full_path }}">
+        <button class="rounded-md px-2.5 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-50">Suspend</button></form>
+    {% endif %}
+    {% if u.device_id %}
+      <form method="post" action="{% url 'admin_user_action' u.pk %}" data-confirm="The phone binding for {{ u }} will be cleared. Their next scan binds a new device." data-confirm-title="Unbind device?" data-confirm-ok="Unbind">{% csrf_token %}<input type="hidden" name="action" value="unbind"><input type="hidden" name="next" value="{{ next|default:request.get_full_path }}">
+        <button class="rounded-md px-2.5 py-1 text-xs font-semibold text-sky-700 hover:bg-sky-50">Unbind</button></form>
+    {% endif %}
+    {% if u.pk != user.pk %}
+      <form method="post" action="{% url 'admin_user_action' u.pk %}" data-confirm="{{ u }} will be archived (soft-deleted). They cannot log in, but all attendance and audit history is preserved and the account can be restored." data-confirm-title="Archive account?" data-confirm-ok="Archive">{% csrf_token %}<input type="hidden" name="action" value="archive"><input type="hidden" name="next" value="{{ next|default:request.get_full_path }}">
+        <button class="rounded-md px-2.5 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-100">Archive</button></form>
+    {% endif %}
+  {% else %}
+    <form method="post" action="{% url 'admin_user_action' u.pk %}">{% csrf_token %}<input type="hidden" name="action" value="restore"><input type="hidden" name="next" value="{{ next|default:request.get_full_path }}">
+      <button class="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-200">Restore</button></form>
+  {% endif %}
+  <a href="{% url 'admin_user_edit' u.pk %}" class="rounded-md px-2.5 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-50">Edit</a>
+</div>

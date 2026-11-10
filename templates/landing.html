@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% load static humanize %}
+{% block title %}Welcome{% endblock %}
+{% block nav %}{% endblock %}
+{% block main_class %}w-full{% endblock %}
+
+{% block content %}
+{# ------------------------------------------------------------------ HERO #}
+<section class="relative isolate overflow-hidden">
+  <img src="{% static 'images/zdspgc.jpeg' %}" alt="{{ SCHOOL_NAME }} campus"
+       class="absolute inset-0 -z-20 h-full w-full object-cover object-[center_35%]">
+  <div class="absolute inset-0 -z-10 bg-gradient-to-br from-slate-950/90 via-brand-950/80 to-brand-900/60"></div>
+
+  <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-5 sm:px-6 lg:px-8">
+    <div class="flex items-center gap-3">
+      <img src="{% static 'images/zdspgc_logo.png' %}" alt="{{ SCHOOL_SHORT }} logo" class="h-12 w-12 rounded-full bg-white/95 object-contain p-0.5 shadow-lg">
+      <div class="leading-tight text-white">
+        <p class="text-lg font-extrabold tracking-tight">{{ APP_NAME }}</p>
+        <p class="text-xs text-white/70">{{ SCHOOL_SHORT }}</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      {% if user.is_authenticated %}
+        <a href="{% url 'dashboard' %}" class="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-brand-800 shadow hover:bg-brand-50">Go to dashboard</a>
+      {% else %}
+        <a href="{% url 'login' %}" class="rounded-lg px-4 py-2 text-sm font-semibold text-white hover:bg-white/10">Sign in</a>
+        <a href="{% url 'register' %}" class="hidden rounded-lg bg-gold-500 px-4 py-2 text-sm font-semibold text-slate-900 shadow hover:bg-gold-400 sm:inline-block">Create account</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="mx-auto grid max-w-7xl gap-12 px-4 pb-20 pt-10 sm:px-6 sm:pb-28 sm:pt-16 lg:grid-cols-2 lg:px-8">
+    <div class="text-white">
+      <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium ring-1 ring-white/20">
+        <span class="h-2 w-2 animate-pulse rounded-full bg-gold-400"></span> Official attendance platform of {{ SCHOOL_SHORT }}
+      </span>
+      <h1 class="mt-6 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+        Attendance that<br><span class="text-gold-400">can't be faked.</span>
+      </h1>
+      <p class="mt-6 max-w-xl text-base leading-relaxed text-white/80 sm:text-lg">
+        {{ APP_NAME }} combines rotating QR codes, phone binding and GPS geofencing so every check-in
+        at {{ SCHOOL_NAME }} is the real student, on the real device, inside the real classroom.
+      </p>
+      <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+        {% if user.is_authenticated %}
+          <a href="{% url 'dashboard' %}" class="rounded-xl bg-gold-500 px-6 py-3 text-center text-sm font-bold text-slate-900 shadow-lg hover:bg-gold-400">Open my dashboard</a>
+        {% else %}
+          <a href="{% url 'login' %}" class="rounded-xl bg-gold-500 px-6 py-3 text-center text-sm font-bold text-slate-900 shadow-lg hover:bg-gold-400">Sign in to {{ APP_NAME }}</a>
+          <a href="{% url 'register' %}" class="rounded-xl bg-white/10 px-6 py-3 text-center text-sm font-semibold text-white ring-1 ring-white/30 hover:bg-white/20">I'm new – register</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="hidden items-center justify-center lg:flex">
+      <div class="relative w-full max-w-sm rounded-3xl bg-white/10 p-6 shadow-2xl ring-1 ring-white/20 backdrop-blur-md">
+        <div class="flex items-center justify-between text-white">
+          <p class="text-sm font-semibold">IS201 · Systems Analysis</p>
+          <span class="rounded-full bg-emerald-400/20 px-2 py-0.5 text-[11px] font-semibold text-emerald-200">LIVE</span>
+        </div>
+        <div class="mt-5 grid place-items-center rounded-2xl bg-white p-6">
+          <svg viewBox="0 0 29 29" class="h-48 w-48 text-slate-900" aria-hidden="true">
+            <path fill="currentColor" d="M0 0h7v7H0zM1 1v5h5V1zM2 2h3v3H2zM22 0h7v7h-7zm1 1v5h5V1zm1 1h3v3h-3zM0 22h7v7H0zm1 1v5h5v-5zm1 1h3v3H2zM9 0h2v2H9zm4 0h1v3h-1zm3 1h2v2h-2zm-6 4h3v1h-3zm5 0h1v4h-1zm3 1h2v2h-2zM9 8h1v3H9zm3 1h2v1h-2zm-4 3h4v1H8zm6 0h3v3h-3zm5-3h2v3h-2zM0 9h3v1H0zm4 1h2v2H4zM0 13h2v2H0zm23-4h3v1h-3zm4 2h2v3h-2zm-5 3h3v2h-3zM9 16h2v3H9zm4 2h3v1h-3zm5-2h2v2h-2zm3 3h3v1h-3zm4 0h4v2h-4zm-16 4h2v2H9zm4 0h1v6h-1zm3 1h3v2h-3zm5 2h2v4h-2zm3-3h1v3h-1zm2 4h3v2h-3zM9 27h2v2H9zm7 1h3v1h-3z"/>
+          </svg>
+        </div>
+        <div class="mt-5 flex items-center justify-between text-xs text-white/80">
+          <span>Token rotates every 8 s</span><span>📍 40 m geofence</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ------------------------------------------------------------ FEATURES #}
+<section class="relative z-10 mx-auto -mt-12 max-w-7xl px-4 sm:px-6 lg:px-8">{# z-10: cards sit above the hero photo instead of under it #}
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="rounded-2xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
+      <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-100 text-brand-700">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 18h2v2h-2zM14 18h2v2h-2zM18 14h2v2h-2z"/></svg>
+      </div>
+      <h3 class="mt-4 font-bold text-slate-900">Dynamic QR codes</h3>
+      <p class="mt-1 text-sm text-slate-600">Cryptographically signed tokens that expire in 10 seconds – screenshots are useless.</p>
+    </div>
+    <div class="rounded-2xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
+      <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gold-400/20 text-gold-600">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><rect x="7" y="2" width="10" height="20" rx="2"/><path stroke-linecap="round" d="M11 18h2"/></svg>
+      </div>
+      <h3 class="mt-4 font-bold text-slate-900">Phone binding</h3>
+      <p class="mt-1 text-sm text-slate-600">Each student is locked to one device, stopping friends from scanning on their behalf.</p>
+    </div>
+    <div class="rounded-2xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
+      <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s-7-6.1-7-11a7 7 0 1 1 14 0c0 4.9-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+      </div>
+      <h3 class="mt-4 font-bold text-slate-900">GPS geofencing</h3>
+      <p class="mt-1 text-sm text-slate-600">Haversine distance checks ensure students are physically inside the classroom radius.</p>
+    </div>
+    <div class="rounded-2xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
+      <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-100 text-rose-700">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3 4 6v6c0 5 3.4 8.4 8 9 4.6-.6 8-4 8-9V6l-8-3Z"/><path stroke-linecap="round" d="M9 12l2 2 4-4"/></svg>
+      </div>
+      <h3 class="mt-4 font-bold text-slate-900">Full audit trail</h3>
+      <p class="mt-1 text-sm text-slate-600">Every rejected scan is logged so proxy attempts and anomalies are easy to spot.</p>
+    </div>
+  </div>
+</section>
+
+{# ---------------------------------------------------------------- STATS #}
+<section class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+  <div class="grid overflow-hidden rounded-3xl bg-brand-800 text-white shadow-xl lg:grid-cols-2">
+    <div class="p-8 sm:p-12">
+      <h2 class="text-2xl font-extrabold sm:text-3xl">Built for {{ SCHOOL_SHORT }} classrooms</h2>
+      <p class="mt-3 text-white/80">Instructors project a live QR from any laptop or phone. Students scan with their phone browser – no app install required.</p>
+      <dl class="mt-8 grid grid-cols-2 gap-6">
+        <div><dt class="text-xs uppercase tracking-wide text-white/60">Students</dt><dd class="text-3xl font-extrabold">{{ stats.students|intcomma }}</dd></div>
+        <div><dt class="text-xs uppercase tracking-wide text-white/60">Subjects</dt><dd class="text-3xl font-extrabold">{{ stats.subjects|intcomma }}</dd></div>
+        <div><dt class="text-xs uppercase tracking-wide text-white/60">Class sessions</dt><dd class="text-3xl font-extrabold">{{ stats.sessions|intcomma }}</dd></div>
+        <div><dt class="text-xs uppercase tracking-wide text-white/60">Verified scans</dt><dd class="text-3xl font-extrabold">{{ stats.scans|intcomma }}</dd></div>
+      </dl>
+    </div>
+    <div class="relative min-h-[16rem]">
+      <img src="{% static 'images/zdspgc.jpeg' %}" alt="{{ SCHOOL_NAME }} main building" class="absolute inset-0 h-full w-full object-cover object-[center_40%]">
+      <div class="absolute inset-0 bg-gradient-to-r from-brand-800 via-brand-800/20 to-transparent"></div>
+    </div>
+  </div>
+</section>
+{% endblock %}

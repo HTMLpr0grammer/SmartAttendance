@@ -1,0 +1,65 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#16633f">
+  <title>{% block title %}{{ APP_NAME }}{% endblock %} · {{ SCHOOL_SHORT }}</title>
+  <link rel="icon" type="image/png" href="{% static 'images/zdspgc_logo.png' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  {# Compiled Tailwind CSS (served from this site, no CDN). Rebuild with the command in README.md after changing classes. #}
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <style>
+    [x-cloak]{display:none!important}
+    .qr-svg svg{width:100%;height:auto;display:block}
+    .ring-progress{transition:stroke-dashoffset 1s linear}
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body class="h-full bg-slate-50 font-sans text-slate-800 antialiased">
+<div class="min-h-full flex flex-col">
+  {% block nav %}
+  {% if user.is_authenticated %}{% include "partials/_nav.html" %}{% endif %}
+  {% endblock %}
+
+  {% block messages %}{% include "partials/_messages.html" %}{% endblock %}
+
+  <main class="flex-1 {% block main_class %}mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block footer %}
+  <footer class="border-t border-slate-200 bg-white">
+    <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-4 text-xs text-slate-500 sm:flex-row sm:px-6 lg:px-8">
+      <p>&copy; {% now "Y" %} {{ SCHOOL_NAME }}</p>
+      <p>{{ APP_NAME }} · QR Classroom Attendance</p>
+    </div>
+  </footer>
+  {% endblock %}
+</div>
+
+{# Global confirm modal + toast stack, driven by static/js/app.js #}
+<div id="confirm-modal" class="fixed inset-0 z-50 hidden items-end justify-center bg-slate-900/60 p-4 backdrop-blur-sm sm:items-center" role="dialog" aria-modal="true">
+  <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+    <div class="flex items-start gap-4">
+      <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+      </div>
+      <div>
+        <h3 id="confirm-title" class="text-base font-semibold text-slate-900">Are you sure?</h3>
+        <p id="confirm-body" class="mt-1 text-sm text-slate-600"></p>
+      </div>
+    </div>
+    <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <button type="button" data-confirm-cancel class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</button>
+      <button type="button" data-confirm-ok class="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700">Confirm</button>
+    </div>
+  </div>
+</div>
+<div id="toast-stack" class="pointer-events-none fixed inset-x-0 top-4 z-[60] flex flex-col items-center gap-2 px-4"></div>
+
+<script src="{% static 'js/app.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Scan QR{% endblock %}
+{% block footer %}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-md px-4 py-5{% endblock %}
+
+{% block content %}
+{% include "student/_pending_banner.html" %}
+<div class="mb-4 text-center">
+  <h1 class="text-xl font-extrabold text-slate-900">Scan class QR code</h1>
+  <p class="text-sm text-slate-500">Stay inside the classroom and keep location enabled.</p>
+</div>
+{% include "student/_scanner.html" with autostart=True %}
+<ul class="mt-5 space-y-2 text-xs text-slate-500">
+  <li>✅ Codes change every few seconds — scan the one currently on screen.</li>
+  <li>📍 If your instructor turned geofencing on, you must be within the classroom radius. (It is off for online sessions.)</li>
+  <li>🔒 Your account works on one phone only. Ask your instructor to unbind if you switch phones.</li>
+</ul>
+<a href="{% url 'student_dashboard' %}" class="mt-6 block rounded-xl border border-slate-300 bg-white py-3 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50">Back to dashboard</a>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/vendor/html5-qrcode.min.js' %}"></script>{# html5-qrcode 2.3.8, served locally #}
+<script src="{% static 'js/scanner.js' %}"></script>
+{% endblock %}

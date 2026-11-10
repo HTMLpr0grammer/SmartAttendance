@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load sa_tags %}
+{% block title %}Subjects &amp; Departments{% endblock %}
+
+{% block content %}
+<p class="text-sm font-medium text-brand-700">Superadmin</p>
+<h1 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Subjects &amp; Departments</h1>
+<p class="mt-1 text-sm text-slate-500">Allocate subjects to approved instructors and group them by department. Reassigning a subject keeps its sessions, rosters and attendance history intact.</p>
+
+<div class="mt-8 grid gap-6 xl:grid-cols-3">
+  {# ----------------------------------------------------------- Subject allocations #}
+  <section class="xl:col-span-2">
+    <h2 class="text-lg font-bold text-slate-900">Subject allocations</h2>
+    <div class="mt-4 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+          <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="px-4 py-3">Subject</th>
+              <th class="px-3 py-3 text-center">Students</th>
+              <th class="px-3 py-3 text-center">Sessions</th>
+              <th class="px-4 py-3">Instructor &amp; department</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for s in subjects %}
+            <tr class="align-top hover:bg-slate-50">
+              <td class="px-4 py-3">
+                <p class="text-xs font-bold uppercase tracking-wide text-brand-700">{{ s.subject_code }}</p>
+                <p class="font-semibold text-slate-800">{{ s.title }}</p>
+                <a href="{% url 'admin_subject_export_xlsx' s.pk %}" class="mt-0.5 inline-block text-xs font-semibold text-brand-700 hover:underline">⬇ Excel class record</a>
+                <p class="mt-0.5 text-xs text-slate-500">
+                  {{ s.teacher.get_full_name|default:s.teacher.username }}
+                  {% if s.teacher.status != "active" or not s.teacher.is_active %}
+                    <span class="ml-1 inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-semibold ring-1 ring-inset {{ s.teacher|user_status_key|badge }}">{{ s.teacher.display_status }}</span>
+                  {% endif %}
+                </p>
+              </td>
+              <td class="px-3 py-3 text-center font-semibold text-slate-700">{{ s.n_students }}</td>
+              <td class="px-3 py-3 text-center font-semibold text-slate-700">{{ s.n_sessions }}</td>
+              <td class="px-4 py-3">
+                <form method="post" class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  {% csrf_token %}
+                  <input type="hidden" name="form" value="reassign">
+                  <input type="hidden" name="subject_id" value="{{ s.pk }}">
+                  <select name="teacher_id" aria-label="Instructor for {{ s.subject_code }}" class="w-full rounded-lg border-slate-300 py-1.5 text-sm focus:border-brand-600 focus:ring-brand-600 sm:w-48">
+                    <option value="">— choose instructor —</option>
+                    {% for i in instructors %}<option value="{{ i.pk }}" {% if i.pk == s.teacher_id %}selected{% endif %}>{{ i.get_full_name|default:i.username }}</option>{% endfor %}
+                  </select>
+                  <select name="department_id" aria-label="Department for {{ s.subject_code }}" class="w-full rounded-lg border-slate-300 py-1.5 text-sm focus:border-brand-600 focus:ring-brand-600 sm:w-40">
+                    <option value="">No department</option>
+                    {% for d in departments %}{% if d.is_active or d.pk == s.department_id %}<option value="{{ d.pk }}" {% if d.pk == s.department_id %}selected{% endif %}>{{ d.code }}</option>{% endif %}{% endfor %}
+                  </select>
+                  <button class="rounded-lg bg-brand-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-800">Save</button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="px-4 py-12 text-center text-slate-500">No subjects yet. Create the first one using the form on the right.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  {# ----------------------------------------------------------- Create forms #}
+  <aside class="space-y-6">
+    <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+      <h2 class="text-base font-bold text-slate-900">New subject</h2>
+      <p class="mt-1 text-xs text-slate-500">Only approved, active instructors can be assigned.</p>
+      <form method="post" class="mt-4 space-y-4" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="form" value="subject">
+        {% for e in subject_form.non_field_errors %}<p class="text-xs text-rose-600">{{ e }}</p>{% endfor %}
+        {% for field in subject_form %}{% include "partials/_field.html" with field=field %}{% endfor %}
+        <button class="w-full rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white shadow hover:bg-brand-800">Create subject</button>
+      </form>
+    </section>
+
+    <section class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+      <h2 class="border-b border-slate-100 px-6 py-4 text-base font-bold text-slate-900">Departments</h2>
+      <ul class="divide-y divide-slate-100">
+        {% for d in departments %}
+        <li class="flex items-center justify-between gap-3 px-6 py-3">
+          <div class="min-w-0 {% if not d.is_active %}opacity-60{% endif %}">
+            <p class="text-sm font-semibold text-slate-800">{{ d.code }}{% if not d.is_active %} <span class="text-xs font-normal text-slate-500">(inactive)</span>{% endif %}</p>
+            <p class="truncate text-xs text-slate-500">{{ d.name }} · {{ d.n_subjects }} subject{{ d.n_subjects|pluralize }}</p>
+          </div>
+          <form method="post">{% csrf_token %}
+            <input type="hidden" name="form" value="toggle_department">
+            <input type="hidden" name="department_id" value="{{ d.pk }}">
+            <button class="rounded-md px-2.5 py-1 text-xs font-semibold {% if d.is_active %}text-amber-700 hover:bg-amber-50{% else %}text-emerald-700 hover:bg-emerald-50{% endif %}">{% if d.is_active %}Deactivate{% else %}Activate{% endif %}</button>
+          </form>
+        </li>
+        {% empty %}
+        <li class="px-6 py-6 text-center text-sm text-slate-500">No departments yet.</li>
+        {% endfor %}
+      </ul>
+      <form method="post" class="space-y-3 border-t border-slate-100 p-6" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="form" value="department">
+        <h3 class="text-sm font-semibold text-slate-900">Add department</h3>
+        {% for e in dept_form.non_field_errors %}<p class="text-xs text-rose-600">{{ e }}</p>{% endfor %}
+        {% for field in dept_form %}{% include "partials/_field.html" with field=field %}{% endfor %}
+        <button class="w-full rounded-lg border border-brand-700 px-4 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50">Add department</button>
+      </form>
+    </section>
+  </aside>
+</div>
+{% endblock %}

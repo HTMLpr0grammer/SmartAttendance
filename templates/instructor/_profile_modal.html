@@ -1,0 +1,11 @@
+{# Student Attendance Profile modal – content rendered by SA.openProfile() #}
+<div id="profile-modal" data-modal class="fixed inset-0 z-50 hidden items-end justify-center bg-slate-900/60 p-0 backdrop-blur-sm sm:items-center sm:p-4" role="dialog" aria-modal="true">
+  <div class="max-h-[92vh] w-full overflow-y-auto rounded-t-2xl bg-white p-6 shadow-2xl sm:max-w-2xl sm:rounded-2xl">
+    <div class="mb-2 flex justify-end">
+      <button type="button" data-close-modal="profile-modal" class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label="Close">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div data-profile-body></div>
+  </div>
+</div>

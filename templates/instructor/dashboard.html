@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% load sa_tags %}
+{% block title %}My Classes{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <p class="text-sm font-medium text-brand-700">Instructor dashboard</p>
+    <h1 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Good day, {{ user.first_name|default:user.username }} 👋</h1>
+  </div>
+  {% if subjects %}
+  <button type="button" onclick="openStartSession()" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-700 px-5 py-3 text-sm font-semibold text-white shadow hover:bg-brand-800">
+    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>
+    Start Session
+  </button>
+  {% endif %}
+</div>
+
+<div class="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+  {% include "partials/_stat.html" with label="Assigned subjects" value=subjects|length icon="📚" %}
+  {% include "partials/_stat.html" with label="Students" value=total_students icon="🎓" tone="bg-sky-50 text-sky-700" %}
+  {% with v=overall.attendance_rate|stringformat:".1f"|add:"%" %}
+  {% include "partials/_stat.html" with label="Attendance rate" value=v sub="Present + late across all classes" icon="✅" tone="bg-emerald-50 text-emerald-700" %}
+  {% endwith %}
+  {% with v=overall.late_rate|stringformat:".1f"|add:"%" %}
+  {% include "partials/_stat.html" with label="Tardiness rate" value=v sub="Share of late check-ins" icon="⏰" tone="bg-amber-50 text-amber-700" %}
+  {% endwith %}
+</div>
+
+<h2 class="mt-10 text-lg font-bold text-slate-900">Assigned subjects</h2>
+{% if subjects %}
+<div class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+  {% for s in subjects %}
+  <div class="flex flex-col rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <p class="text-xs font-bold uppercase tracking-wide text-brand-700">{{ s.subject_code }}</p>
+        <h3 class="truncate text-base font-bold text-slate-900">{{ s.title }}</h3>
+        {% if s.department %}<p class="text-xs text-slate-500">{{ s.department.name }}</p>{% endif %}
+      </div>
+      {% if s.live_session %}
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700"><span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>LIVE</span>
+      {% endif %}
+    </div>
+    <dl class="mt-4 grid grid-cols-3 gap-2 text-center">
+      <div class="rounded-lg bg-slate-50 py-2"><dt class="text-[11px] text-slate-500">Students</dt><dd class="font-bold text-slate-900">{{ s.n_students }}</dd></div>
+      <div class="rounded-lg bg-slate-50 py-2"><dt class="text-[11px] text-slate-500">Sessions</dt><dd class="font-bold text-slate-900">{{ s.n_sessions }}</dd></div>
+      <div class="rounded-lg bg-slate-50 py-2"><dt class="text-[11px] text-slate-500">Attendance</dt><dd class="font-bold text-slate-900">{{ s.stats.attendance_rate|floatformat:0 }}%</dd></div>
+    </dl>
+    <div class="mt-4">{% include "partials/_pla_bar.html" with s=s.stats %}
+      <div class="mt-1.5 flex justify-between text-[11px] text-slate-500">
+        <span>🟢 {{ s.stats.present }} present</span><span>🟡 {{ s.stats.late }} late</span><span>🔴 {{ s.stats.absent }} absent</span>
+      </div>
+    </div>
+    <div class="mt-5 flex gap-2 pt-1">
+      {% if s.live_session %}
+        <a href="{% url 'instructor_session' s.live_session.pk %}" class="flex-1 rounded-lg bg-emerald-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-emerald-700">Open live QR</a>
+      {% else %}
+        <button type="button" data-start-session="{{ s.pk }}" class="flex-1 rounded-lg bg-brand-700 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-800">Start session</button>
+      {% endif %}
+      <a href="{% url 'instructor_subject' s.pk %}" class="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50">Roster &amp; stats</a>
+    </div>
+    <a href="{% url 'instructor_subject_export_xlsx' s.pk %}" class="mt-2 block text-center text-xs font-semibold text-brand-700 hover:underline">⬇ Download Excel class record</a>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="mt-4 rounded-2xl border-2 border-dashed border-slate-300 bg-white p-10 text-center">
+  <p class="text-lg font-semibold text-slate-700">No subjects assigned yet</p>
+  <p class="mt-1 text-sm text-slate-500">Ask the Superadmin to allocate subjects to your account.</p>
+</div>
+{% endif %}
+
+<h2 class="mt-10 text-lg font-bold text-slate-900">Recent sessions</h2>
+<div class="mt-4 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+  <div class="overflow-x-auto">
+  <table class="min-w-full divide-y divide-slate-200 text-sm">
+    <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <tr><th class="px-4 py-3">Session</th><th class="px-4 py-3">Date</th><th class="px-4 py-3 text-center">Present</th><th class="px-4 py-3 text-center">Late</th><th class="px-4 py-3 text-center">Absent</th><th class="px-4 py-3">Status</th><th class="px-4 py-3"></th></tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for cs in recent_sessions %}
+      <tr class="hover:bg-slate-50">
+        <td class="px-4 py-3"><p class="font-semibold text-slate-800">{{ cs.subject.subject_code }}</p><p class="max-w-xs truncate text-xs text-slate-500">{{ cs.session_title }}</p></td>
+        <td class="whitespace-nowrap px-4 py-3 text-slate-600">{{ cs.date|date:"M d, Y" }}</td>
+        <td class="px-4 py-3 text-center font-semibold text-emerald-700">{{ cs.n_present }}</td>
+        <td class="px-4 py-3 text-center font-semibold text-amber-700">{{ cs.n_late }}</td>
+        <td class="px-4 py-3 text-center font-semibold text-rose-700">{{ cs.n_absent }}</td>
+        <td class="px-4 py-3">{% if cs.is_open %}<span class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">Live</span>{% else %}<span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">Closed</span>{% endif %}</td>
+        <td class="whitespace-nowrap px-4 py-3 text-right"><a href="{% url 'instructor_session' cs.pk %}" class="font-semibold text-brand-700 hover:underline">Open</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="px-4 py-8 text-center text-slate-500">No sessions yet. Start one to begin taking attendance.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+{% include "instructor/_start_session_modal.html" %}
+{% endblock %}

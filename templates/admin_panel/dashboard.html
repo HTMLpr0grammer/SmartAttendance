@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% load sa_tags humanize %}
+{% block title %}Superadmin{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <p class="text-sm font-medium text-brand-700">Superadmin</p>
+    <h1 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Institution overview</h1>
+  </div>
+  <p class="text-sm text-slate-500">{% now "l, F j, Y" %}</p>
+</div>
+
+<div class="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
+  {% include "partials/_stat.html" with label="Students" value=kpis.students icon="🎓" %}
+  {% include "partials/_stat.html" with label="Active instructors" value=kpis.instructors icon="🧑‍🏫" tone="bg-sky-50 text-sky-700" %}
+  {% include "partials/_stat.html" with label="Pending approvals" value=kpis.pending icon="⏳" tone="bg-amber-50 text-amber-700" %}
+  {% include "partials/_stat.html" with label="Sessions today" value=kpis.sessions_today icon="📅" tone="bg-violet-50 text-violet-700" %}
+  {% include "partials/_stat.html" with label="Live now" value=kpis.live_sessions icon="📡" tone="bg-emerald-50 text-emerald-700" %}
+  {% include "partials/_stat.html" with label="Alerts (7 days)" value=kpis.alerts_week icon="🛡️" tone="bg-rose-50 text-rose-700" %}
+</div>
+
+<form method="get" action="{% url 'admin_export_xlsx' %}" class="mt-6 flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 lg:flex-row lg:items-end">
+  <div class="lg:mr-auto">
+    <h2 class="text-base font-bold text-slate-900">📊 Excel attendance report</h2>
+    <p class="text-xs text-slate-500">Subjects, student standing and rejected scans. Leave the dates empty for all records.</p>
+  </div>
+  <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:flex">
+    <label class="text-xs font-medium text-slate-600">From<input type="date" name="from" class="mt-1 block w-full rounded-lg border-slate-300 text-sm focus:border-brand-600 focus:ring-brand-600"></label>
+    <label class="text-xs font-medium text-slate-600">To<input type="date" name="to" class="mt-1 block w-full rounded-lg border-slate-300 text-sm focus:border-brand-600 focus:ring-brand-600"></label>
+    <label class="col-span-2 text-xs font-medium text-slate-600 sm:col-span-1">Department
+      <select name="department" class="mt-1 block w-full rounded-lg border-slate-300 text-sm focus:border-brand-600 focus:ring-brand-600">
+        <option value="">All departments</option>
+        {% for d in export_departments %}<option value="{{ d.pk }}">{{ d.code }}</option>{% endfor %}
+      </select>
+    </label>
+  </div>
+  <button class="rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white shadow hover:bg-brand-800">⬇ Download Excel</button>
+</form>
+
+<div class="mt-8 grid gap-6 lg:grid-cols-3">
+  {# --------------------------------------------- Punctuality analytics #}
+  <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 lg:col-span-1">
+    <h2 class="text-base font-bold text-slate-900">Institution-wide punctuality</h2>
+    <p class="text-xs text-slate-500">{{ overall.total|intcomma }} attendance records</p>
+    <div class="mt-5 space-y-4">
+      <div>
+        <div class="flex justify-between text-sm"><span class="font-medium text-slate-700">Present (on time)</span><span class="font-bold text-emerald-700">{{ overall.on_time_rate }}%</span></div>
+        <div class="mt-1 h-2.5 rounded-full bg-slate-100"><div class="h-2.5 rounded-full bg-emerald-500" style="width: {{ overall.on_time_rate }}%"></div></div>
+      </div>
+      <div>
+        <div class="flex justify-between text-sm"><span class="font-medium text-slate-700">Late</span><span class="font-bold text-amber-700">{{ overall.late_rate }}%</span></div>
+        <div class="mt-1 h-2.5 rounded-full bg-slate-100"><div class="h-2.5 rounded-full bg-amber-400" style="width: {{ overall.late_rate }}%"></div></div>
+      </div>
+      <div>
+        <div class="flex justify-between text-sm"><span class="font-medium text-slate-700">Absent</span><span class="font-bold text-rose-700">{{ overall.absent_rate }}%</span></div>
+        <div class="mt-1 h-2.5 rounded-full bg-slate-100"><div class="h-2.5 rounded-full bg-rose-500" style="width: {{ overall.absent_rate }}%"></div></div>
+      </div>
+    </div>
+    <div class="mt-6 rounded-xl bg-brand-50 p-4 text-center">
+      <p class="text-xs font-medium text-brand-700">Overall attendance rate</p>
+      <p class="text-3xl font-extrabold text-brand-800">{{ overall.attendance_rate }}%</p>
+    </div>
+
+    {% if reason_breakdown %}
+    <h3 class="mt-6 text-sm font-bold text-slate-900">Rejected scans by reason</h3>
+    <ul class="mt-2 space-y-1.5">
+      {% for r in reason_breakdown %}
+      <li class="flex items-center justify-between text-sm">
+        <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset {{ r.reason|badge }}">{{ r.label }}</span>
+        <span class="font-semibold text-slate-700">{{ r.n }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </section>
+
+  {# --------------------------------------------- Truancy watchlist #}
+  <section class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 lg:col-span-2">
+    <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+      <div>
+        <h2 class="text-base font-bold text-slate-900">Truancy &amp; tardiness watchlist</h2>
+        <p class="text-xs text-slate-500">Students flagged for critical absences or frequent tardiness</p>
+      </div>
+      <span class="rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-700">{{ watchlist|length }}</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-slate-100 text-sm">
+        <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <tr><th class="px-6 py-2.5">Student</th><th class="px-3 py-2.5 text-center">P</th><th class="px-3 py-2.5 text-center">L</th><th class="px-3 py-2.5 text-center">A</th><th class="px-3 py-2.5">Rate</th><th class="px-6 py-2.5">Flag</th></tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for s in watchlist %}
+          <tr class="hover:bg-slate-50">
+            <td class="px-6 py-3"><a href="{% url 'admin_user_edit' s.pk %}" class="font-semibold text-slate-800 hover:text-brand-700">{{ s.get_full_name }}</a><p class="text-xs text-slate-500">{{ s.id_number }} · {{ s.student_profile.course_program }}</p></td>
+            <td class="px-3 py-3 text-center font-semibold text-emerald-700">{{ s.n_present }}</td>
+            <td class="px-3 py-3 text-center font-semibold text-amber-700">{{ s.n_late }}</td>
+            <td class="px-3 py-3 text-center font-semibold text-rose-700">{{ s.n_absent }}</td>
+            <td class="px-3 py-3 font-semibold">{{ s.attendance_rate|floatformat:0 }}%</td>
+            <td class="px-6 py-3"><span class="inline-flex whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset {{ s.standing|badge }}">{{ s.standing }}</span></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="px-6 py-10 text-center text-slate-500">🎉 No students are currently flagged.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<div class="mt-6 grid gap-6 lg:grid-cols-2">
+  {# --------------------------------------------- Pending instructors #}
+  <section class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+    <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+      <h2 class="text-base font-bold text-slate-900">Pending instructor applications</h2>
+      <span class="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-700">{{ pending_instructors|length }}</span>
+    </div>
+    <ul class="divide-y divide-slate-100">
+      {% for u in pending_instructors %}
+      <li class="flex flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="min-w-0">
+          <p class="font-semibold text-slate-800">{{ u.get_full_name|default:u.username }}</p>
+          <p class="truncate text-xs text-slate-500">{{ u.email }} · applied {{ u.date_joined|naturaltime }}</p>
+          {% if u.address %}<p class="truncate text-xs text-slate-400">{{ u.address.city_municipality }}, {{ u.address.province }}</p>{% endif %}
+        </div>
+        {% include "admin_panel/_user_actions.html" with u=u %}
+      </li>
+      {% empty %}
+      <li class="px-6 py-8 text-center text-sm text-slate-500">No pending instructor applications.</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  {# --------------------------------------------- Pending students #}
+  <section class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+    <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+      <div>
+        <h2 class="text-base font-bold text-slate-900">Pending students</h2>
+        <p class="text-xs text-slate-500">Auto-activated when an instructor enrolls them</p>
+      </div>
+      <a href="{% url 'admin_users' %}?role=student&status=pending" class="text-xs font-semibold text-brand-700 hover:underline">View all</a>
+    </div>
+    <ul class="divide-y divide-slate-100">
+      {% for u in pending_students %}
+      <li class="flex flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="min-w-0">
+          <p class="font-semibold text-slate-800">{{ u.get_full_name|default:u.username }}</p>
+          <p class="truncate text-xs text-slate-500">{{ u.id_number }} · {{ u.student_profile.course_program }} · joined {{ u.date_joined|naturaltime }}</p>
+        </div>
+        {% include "admin_panel/_user_actions.html" with u=u %}
+      </li>
+      {% empty %}
+      <li class="px-6 py-8 text-center text-sm text-slate-500">No pending students.</li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+
+{# --------------------------------------------- Audit feed #}
+<section class="mt-6 rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+  <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+    <div>
+      <h2 class="text-base font-bold text-slate-900">Proxy &amp; anomaly feed</h2>
+      <p class="text-xs text-slate-500">Most recent rejected scans school-wide</p>
+    </div>
+    <a href="{% url 'admin_audit' %}" class="text-xs font-semibold text-brand-700 hover:underline">Full audit log &rarr;</a>
+  </div>
+  {% include "admin_panel/_audit_table.html" with logs=audit_feed %}
+</section>
+{% endblock %}

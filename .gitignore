@@ -1,0 +1,12 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+db.sqlite3
+db.sqlite3-journal
+staticfiles/
+*-upload.zip
+
+# Kept out of the public repository at the owner's request
+README.md

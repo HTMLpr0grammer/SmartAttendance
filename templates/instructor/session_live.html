@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Live · {{ session.subject.subject_code }}{% endblock %}
+
+{% block content %}
+<div id="live-root"
+     data-session-id="{{ session.pk }}"
+     data-subject-id="{{ session.subject_id }}"
+     data-refresh="{{ refresh_seconds|default:8 }}"
+     data-live-poll="{{ live_poll_seconds|default:30 }}">
+
+  <a href="{% url 'instructor_subject' session.subject_id %}" class="text-sm font-medium text-slate-500 hover:text-slate-800">&larr; {{ session.subject.subject_code }} roster</a>
+
+  <div class="mt-2 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <div class="min-w-0">
+      <div class="flex items-center gap-2">
+        <p class="text-sm font-bold uppercase tracking-wide text-brand-700">{{ session.subject.subject_code }} · {{ session.subject.title }}</p>
+        <span id="live-badge" class="hidden items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-700"><span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>LIVE</span>
+        <span id="closed-badge" class="hidden rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-bold text-slate-600">CLOSED</span>
+      </div>
+      <h1 class="truncate text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{{ session.session_title|default:"Attendance session" }}</h1>
+      <p class="mt-1 text-sm text-slate-500">
+        {{ session.date|date:"l, F j, Y" }} · started {{ session.created_at|time:"g:i A" }}
+        · {% if session.has_geofence %}📍 {{ session.allowed_radius_meters }} m geofence{% else %}<span class="text-amber-600">📍 Geofencing off · location is not checked</span>{% endif %}
+        · ⏰ Late after {{ session.late_after_minutes }} min
+      </p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <a href="{% url 'instructor_session_export' session.pk %}" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Export CSV</a>
+      <button id="btn-fullscreen" type="button" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">⛶ Project fullscreen</button>
+      <button id="btn-close" type="button" class="hidden rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700">End session</button>
+    </div>
+  </div>
+
+  <div class="mt-6 grid gap-6 lg:grid-cols-5">
+    {# ----------------------------------------------------- QR projection #}
+    <section id="qr-card" class="flex flex-col items-center justify-center rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 lg:col-span-3 [&:fullscreen]:bg-slate-950 [&:fullscreen]:p-10">
+      <div id="qr-live" class="hidden w-full flex-col items-center">
+        <p data-fs-only class="mb-4 hidden text-center text-2xl font-extrabold text-white">{{ session.subject.subject_code }} · Scan to check in</p>
+        <div class="relative w-full max-w-[26rem]">
+          <div id="qr-box" class="qr-svg rounded-2xl bg-white p-3 ring-1 ring-slate-200 transition-opacity duration-200"></div>
+          <div id="qr-stale" class="absolute inset-0 hidden items-center justify-center rounded-2xl bg-white/85 text-sm font-semibold text-slate-600">Reconnecting…</div>
+        </div>
+        <div class="mt-6 flex items-center gap-5">
+          <div class="relative h-20 w-20">
+            <svg viewBox="0 0 100 100" class="h-20 w-20 -rotate-90">
+              <circle cx="50" cy="50" r="44" fill="none" stroke="#e2e8f0" stroke-width="8"/>
+              <circle id="ring" class="ring-progress" cx="50" cy="50" r="44" fill="none" stroke="#1a7c4c" stroke-width="8" stroke-linecap="round" stroke-dasharray="276.46" stroke-dashoffset="0"/>
+            </svg>
+            <span id="ring-num" class="absolute inset-0 flex items-center justify-center text-2xl font-extrabold text-slate-900 [:fullscreen_&]:text-white">–</span>
+          </div>
+          <div class="[:fullscreen_&]:text-white">
+            <p class="text-sm font-semibold text-slate-800 [:fullscreen_&]:text-white">New code in <span id="ring-text">–</span>s</p>
+            <p class="text-xs text-slate-500 [:fullscreen_&]:text-white/70">Each code expires 10 s after it appears.</p>
+            <p class="mt-1 text-xs text-slate-500 [:fullscreen_&]:text-white/70">Session ends in <span id="session-left" class="font-semibold">--:--</span></p>
+          </div>
+        </div>
+        <p data-fs-only class="mt-6 hidden text-center text-lg font-semibold text-white/80">
+          Present <span id="fs-present" class="text-emerald-400">0</span> · Late <span id="fs-late" class="text-amber-400">0</span>
+        </p>
+      </div>
+
+      <div id="qr-closed" class="hidden py-16 text-center">
+        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-3xl">🔒</div>
+        <p class="mt-4 text-lg font-bold text-slate-800">Session closed</p>
+        <p class="mt-1 text-sm text-slate-500">Students without a check-in were automatically marked absent.<br>You can still correct statuses and notes below.</p>
+        <a href="{% url 'instructor_dashboard' %}" class="mt-5 inline-block rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800">Back to dashboard</a>
+      </div>
+    </section>
+
+    {# ----------------------------------------------------- Side panels #}
+    <aside class="space-y-6 lg:col-span-2">
+      <div class="grid grid-cols-4 gap-2 text-center">
+        <div class="rounded-xl bg-emerald-50 p-3"><p class="text-[11px] font-medium text-emerald-700">Present</p><p id="c-present" class="text-2xl font-extrabold text-emerald-800">0</p></div>
+        <div class="rounded-xl bg-amber-50 p-3"><p class="text-[11px] font-medium text-amber-700">Late</p><p id="c-late" class="text-2xl font-extrabold text-amber-800">0</p></div>
+        <div class="rounded-xl bg-rose-50 p-3"><p class="text-[11px] font-medium text-rose-700">Absent</p><p id="c-absent" class="text-2xl font-extrabold text-rose-800">0</p></div>
+        <div class="rounded-xl bg-slate-100 p-3"><p class="text-[11px] font-medium text-slate-600">Waiting</p><p id="c-waiting" class="text-2xl font-extrabold text-slate-800">0</p></div>
+      </div>
+
+      <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+        <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+          <h2 class="text-sm font-bold text-slate-900">🚩 Rogue scans · not enrolled <span class="font-normal text-slate-500">(first come, first served)</span></h2>
+          <span id="rogue-count" class="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-bold text-sky-700">0</span>
+        </div>
+        <ul id="rogue-list" class="max-h-72 divide-y divide-slate-100 overflow-y-auto">
+          <li class="px-4 py-6 text-center text-xs text-slate-500">No unenrolled scans yet.</li>
+        </ul>
+      </div>
+
+      <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+        <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+          <h2 class="text-sm font-bold text-slate-900">🛡️ Security alerts</h2>
+          <span id="alert-count" class="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-700">0</span>
+        </div>
+        <ul id="alert-list" class="max-h-60 divide-y divide-slate-100 overflow-y-auto">
+          <li class="px-4 py-6 text-center text-xs text-slate-500">No rejected scans.</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  {# ------------------------------------------------------- Attendance table #}
+  <section class="mt-8">
+    <div class="flex items-center justify-between">
+      <h2 class="text-lg font-bold text-slate-900">Session attendance</h2>
+      <div class="flex items-center gap-3 text-xs text-slate-500">
+        <p><span id="sync-label">Auto-refreshing</span> · <span id="last-sync">–</span></p>
+        <button id="btn-refresh" type="button" class="rounded-md border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:bg-slate-50">↻ Refresh now</button>
+      </div>
+    </div>
+    <div class="mt-4 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+          <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="px-4 py-3">Student</th>
+              <th class="px-3 py-3">Checked in</th>
+              <th class="px-3 py-3">Status</th>
+              <th class="min-w-[14rem] px-3 py-3">Notes</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="roster-body" class="divide-y divide-slate-100">
+            <tr><td colspan="5" class="px-4 py-10 text-center text-slate-500">Loading roster…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+
+{% include "instructor/_profile_modal.html" %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/session_live.js' %}"></script>
+{% endblock %}

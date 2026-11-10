@@ -1,0 +1,10 @@
+{% if page.paginator.num_pages > 1 %}
+{% load sa_tags %}
+<nav class="flex items-center justify-between border-t border-slate-100 px-6 py-3 text-sm">
+  <p class="text-slate-500">Page {{ page.number }} of {{ page.paginator.num_pages }} · {{ page.paginator.count }} total</p>
+  <div class="flex gap-2">
+    {% if page.has_previous %}<a href="?{% qs_replace page=page.previous_page_number %}" class="rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50">Previous</a>{% endif %}
+    {% if page.has_next %}<a href="?{% qs_replace page=page.next_page_number %}" class="rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50">Next</a>{% endif %}
+  </div>
+</nav>
+{% endif %}

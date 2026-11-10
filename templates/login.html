@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Sign in{% endblock %}
+{% block nav %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block messages %}{% endblock %}
+{% block main_class %}w-full{% endblock %}
+
+{% block content %}
+<div class="grid min-h-screen lg:grid-cols-2">
+
+  {# ---------------- Hero (split-screen on desktop, banner on mobile) ---------------- #}
+  <aside class="relative isolate h-56 overflow-hidden sm:h-72 lg:h-auto">
+    <img src="{% static 'images/zdspgc.jpeg' %}" alt="{{ SCHOOL_NAME }} campus"
+         class="absolute inset-0 -z-20 h-full w-full object-cover object-[center_40%]">
+    <div class="absolute inset-0 -z-10 bg-gradient-to-t from-slate-950/90 via-brand-950/70 to-brand-900/40 lg:bg-gradient-to-br"></div>
+
+    <div class="flex h-full flex-col justify-between p-6 text-white sm:p-10">
+      <a href="{% url 'landing' %}" class="inline-flex w-fit items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium ring-1 ring-white/20 hover:bg-white/20">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        Back to home
+      </a>
+      <div class="hidden lg:block">
+        <p class="text-sm font-semibold uppercase tracking-[0.2em] text-gold-400">{{ SCHOOL_SHORT }}</p>
+        <h2 class="mt-3 max-w-md text-4xl font-extrabold leading-tight">{{ SCHOOL_NAME }}</h2>
+        <p class="mt-4 max-w-md text-white/80">Secure, proxy-proof classroom attendance with rotating QR codes, device binding and GPS geofencing.</p>
+      </div>
+      <p class="text-xs text-white/70 lg:text-sm">“Every check-in: the real student, on the real phone, in the real room.”</p>
+    </div>
+  </aside>
+
+  {# ---------------- Login card ---------------- #}
+  <section class="relative flex items-start justify-center bg-slate-50 px-4 pb-12 lg:items-center lg:py-12">
+    <div class="w-full max-w-md">
+      {# Logo displayed prominently above the card #}
+      <div class="-mt-16 flex flex-col items-center text-center lg:mt-0">
+        <div class="rounded-full bg-white p-2 shadow-xl ring-4 ring-white">
+          <img src="{% static 'images/zdspgc_logo.png' %}" alt="{{ SCHOOL_NAME }} official seal"
+               class="h-28 w-28 object-contain sm:h-32 sm:w-32">
+        </div>
+        <h1 class="mt-4 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{{ APP_NAME }}</h1>
+        <p class="mt-1 text-sm text-slate-500">Sign in to continue to your dashboard</p>
+      </div>
+
+      <div class="mt-8 rounded-2xl bg-white p-6 shadow-xl ring-1 ring-slate-200 sm:p-8">
+        {% if messages %}
+          <div class="mb-4 space-y-2">
+          {% for message in messages %}
+            <div class="rounded-lg px-3 py-2 text-sm {% if message.tags == 'error' %}bg-rose-50 text-rose-700{% else %}bg-sky-50 text-sky-700{% endif %}">{{ message }}</div>
+          {% endfor %}
+          </div>
+        {% endif %}
+
+        {% if form.non_field_errors %}
+          <div class="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            {% for e in form.non_field_errors %}{{ e }}{% endfor %}
+          </div>
+        {% endif %}
+
+        <form method="post" class="space-y-5" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ next }}">
+          <div>
+            <label for="{{ form.username.id_for_label }}" class="mb-1.5 block text-sm font-medium text-slate-700">{{ form.username.label }}</label>
+            {{ form.username }}
+            {% for e in form.username.errors %}<p class="mt-1 text-xs text-rose-600">{{ e }}</p>{% endfor %}
+          </div>
+          <div>
+            <div class="mb-1.5 flex items-center justify-between">
+              <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-slate-700">Password</label>
+              <button type="button" class="text-xs font-medium text-brand-700 hover:underline" data-toggle-password="#{{ form.password.id_for_label }}">Show</button>
+            </div>
+            {{ form.password }}
+            {% for e in form.password.errors %}<p class="mt-1 text-xs text-rose-600">{{ e }}</p>{% endfor %}
+          </div>
+          <button type="submit" class="w-full rounded-lg bg-brand-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-800 focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-2">
+            Sign in
+          </button>
+        </form>
+
+        <p class="mt-6 text-center text-sm text-slate-600">
+          New student or instructor?
+          <a href="{% url 'register' %}" class="font-semibold text-brand-700 hover:underline">Create an account</a>
+        </p>
+      </div>
+
+      <p class="mt-6 text-center text-xs text-slate-400">&copy; {% now "Y" %} {{ SCHOOL_NAME }}</p>
+    </div>
+  </section>
+</div>
+{% endblock %}

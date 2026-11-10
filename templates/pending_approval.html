@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Awaiting approval{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-xl py-12 text-center">
+  <img src="{% static 'images/zdspgc_logo.png' %}" alt="" class="mx-auto h-24 w-24">
+  <div class="mt-6 rounded-2xl bg-white p-8 shadow-lg ring-1 ring-slate-200">
+    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+      <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 2"/></svg>
+    </div>
+    <h1 class="mt-4 text-2xl font-extrabold text-slate-900">Instructor account pending approval</h1>
+    <p class="mt-2 text-slate-600">Thanks for registering, {{ user.first_name|default:user.username }}. A Superadmin must verify and approve your instructor account before you can manage classes and start attendance sessions.</p>
+    <p class="mt-4 text-sm text-slate-500">You'll get full access automatically once approved — just sign in again.</p>
+  </div>
+</div>
+{% endblock %}

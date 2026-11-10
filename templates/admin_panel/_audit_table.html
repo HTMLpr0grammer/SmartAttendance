@@ -1,0 +1,22 @@
+{% load sa_tags %}
+<div class="overflow-x-auto">
+  <table class="min-w-full divide-y divide-slate-100 text-sm">
+    <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <tr><th class="px-6 py-2.5">When</th><th class="px-3 py-2.5">Reason</th><th class="px-3 py-2.5">Student</th><th class="px-3 py-2.5">Session</th><th class="px-3 py-2.5">Device</th><th class="px-6 py-2.5">Location</th></tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for a in logs %}
+      <tr class="hover:bg-slate-50">
+        <td class="whitespace-nowrap px-6 py-3 text-slate-600">{{ a.created_at|date:"M d" }} <span class="text-slate-400">{{ a.created_at|time:"g:i:s A" }}</span></td>
+        <td class="px-3 py-3"><span class="inline-flex whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset {{ a.reason|badge }}">{{ a.get_reason_display }}</span></td>
+        <td class="px-3 py-3">{% if a.student %}<a href="{% url 'admin_user_edit' a.student.pk %}" class="font-medium text-slate-800 hover:text-brand-700">{{ a.student.get_full_name|default:a.student.username }}</a><p class="text-xs text-slate-500">{{ a.student.id_number }}</p>{% else %}<span class="text-slate-400">Unknown</span>{% endif %}</td>
+        <td class="px-3 py-3 text-slate-600">{% if a.session %}{{ a.session.subject.subject_code }}<p class="text-xs text-slate-400">{{ a.session.date|date:"M d" }}</p>{% else %}—{% endif %}</td>
+        <td class="px-3 py-3 font-mono text-xs text-slate-500" title="{{ a.submitted_device_id|default:'' }}">{% if a.submitted_device_id %}<a href="{% url 'admin_users' %}?q={{ a.submitted_device_id|urlencode }}" class="hover:text-brand-700 hover:underline" title="Show the account this phone is bound to">{{ a.submitted_device_id|truncatechars:11 }}</a>{% else %}—{% endif %}</td>
+        <td class="whitespace-nowrap px-6 py-3 text-xs text-slate-500">{% if a.student_latitude is not None %}<a class="hover:text-brand-700 hover:underline" target="_blank" rel="noopener" href="https://www.google.com/maps?q={{ a.student_latitude }},{{ a.student_longitude }}">{{ a.student_latitude|floatformat:5 }}, {{ a.student_longitude|floatformat:5 }}</a>{% else %}—{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="px-6 py-10 text-center text-slate-500">No rejected scans recorded.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

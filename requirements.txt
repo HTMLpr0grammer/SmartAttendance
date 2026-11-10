@@ -1,0 +1,7 @@
+Django>=5.2,<6.0
+djangorestframework>=3.15
+PyJWT>=2.9
+segno>=1.6
+openpyxl>=3.1      # Excel exports
+# Optional – only needed when DB_ENGINE=postgres
+# psycopg[binary]>=3.2

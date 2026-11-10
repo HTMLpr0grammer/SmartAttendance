@@ -1,0 +1,207 @@
+{# "Start Session" modal: duration, per-session geofencing switch (default ON) and the instructor's GPS fix. #}
+<div id="start-session-modal" data-modal class="fixed inset-0 z-50 hidden items-end justify-center bg-slate-900/60 backdrop-blur-sm sm:items-center sm:p-4" role="dialog" aria-modal="true">
+  <form id="start-session-form" class="max-h-[94vh] w-full overflow-y-auto rounded-t-2xl bg-white p-6 shadow-2xl sm:max-w-lg sm:rounded-2xl">
+    <div class="flex items-start justify-between">
+      <div>
+        <h3 class="text-lg font-bold text-slate-900">Start attendance session</h3>
+        <p class="text-sm text-slate-500">A rotating QR code will be projected for students to scan.</p>
+      </div>
+      <button type="button" data-close-modal="start-session-modal" class="rounded-lg p-1 text-slate-400 hover:bg-slate-100" aria-label="Close">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+
+    <div class="mt-5 space-y-4">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-slate-700" for="ss-subject">Subject</label>
+        <select id="ss-subject" name="subject_id" required class="block w-full rounded-lg border-slate-300 text-sm focus:border-brand-600 focus:ring-brand-600">
+          {% for s in subjects %}<option value="{{ s.pk }}">{{ s.subject_code }} – {{ s.title }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-slate-700" for="ss-title">Session title <span class="font-normal text-slate-400">(optional)</span></label>
+        <input id="ss-title" name="session_title" maxlength="150" placeholder="e.g. Week 7 – Use Case Diagrams" class="block w-full rounded-lg border-slate-300 text-sm focus:border-brand-600 focus:ring-brand-600">
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-slate-700" for="ss-duration">Duration</label>
+        <select id="ss-duration" name="duration_minutes" class="block w-full rounded-lg border-slate-300 text-sm focus:border-brand-600 focus:ring-brand-600">
+          <option value="15">15 minutes</option><option value="30">30 minutes</option>
+          <option value="60" selected>1 hour</option><option value="90">1.5 hours</option>
+          <option value="120">2 hours</option><option value="180">3 hours</option>
+        </select>
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-slate-700" for="ss-late">Mark as late after</label>
+        <div class="flex gap-2">
+          <select id="ss-late" class="block w-full rounded-lg border-slate-300 text-sm focus:border-brand-600 focus:ring-brand-600">
+            <option value="10">10 minutes</option>
+            <option value="15" selected>15 minutes</option>
+            <option value="30">30 minutes</option>
+            <option value="custom">Custom…</option>
+          </select>
+          <div id="ss-late-custom-wrap" class="relative hidden w-36 shrink-0">
+            <input id="ss-late-custom" type="number" min="1" max="180" step="1" placeholder="e.g. 20" aria-label="Custom minutes"
+                   class="block w-full rounded-lg border-slate-300 pr-12 text-sm focus:border-brand-600 focus:ring-brand-600">
+            <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-slate-400">min</span>
+          </div>
+        </div>
+        <p id="ss-late-hint" class="mt-1 text-xs text-slate-500">Scans after this many minutes from the start are marked late.</p>
+      </div>
+
+      {# ---------------- Geofencing switch (per session) ---------------- #}
+      <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <label for="ss-geo-toggle" class="flex cursor-pointer items-start justify-between gap-4">
+          <span>
+            <span class="block text-sm font-semibold text-slate-800">Geofencing</span>
+            <span class="block text-xs text-slate-500">Only accept check-ins from students physically near you. Turn it off for online or remote classes.</span>
+          </span>
+          <span class="relative mt-0.5 inline-flex h-6 w-11 shrink-0">
+            <input type="checkbox" id="ss-geo-toggle" role="switch" checked class="peer sr-only">
+            <span class="absolute inset-0 rounded-full bg-slate-300 transition peer-checked:bg-brand-600 peer-focus-visible:ring-2 peer-focus-visible:ring-brand-600 peer-focus-visible:ring-offset-2"></span>
+            <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition peer-checked:translate-x-5"></span>
+          </span>
+        </label>
+
+        {# ON: radius + instructor GPS fix #}
+        <div id="ss-geo-on" class="mt-4 space-y-4 border-t border-slate-200 pt-4">
+          <div>
+            <label class="mb-1.5 block text-sm font-medium text-slate-700" for="ss-radius">Allowed radius</label>
+            <div class="relative">
+              <input id="ss-radius" name="allowed_radius_meters" type="number" min="10" max="1000" value="40" class="block w-full rounded-lg border-slate-300 pr-10 text-sm focus:border-brand-600 focus:ring-brand-600">
+              <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-slate-400">m</span>
+            </div>
+          </div>
+          <div id="ss-gps" class="rounded-lg border border-slate-200 bg-white p-3">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <span id="ss-gps-dot" class="h-3 w-3 shrink-0 animate-pulse rounded-full bg-amber-400"></span>
+                <div>
+                  <p id="ss-gps-title" class="text-sm font-semibold text-slate-800">Capturing your location…</p>
+                  <p id="ss-gps-sub" class="text-xs text-slate-500">Allow location access so students can be geofenced.</p>
+                </div>
+              </div>
+              <button type="button" id="ss-gps-retry" class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100">Retry</button>
+            </div>
+          </div>
+        </div>
+
+        {# OFF: explanation #}
+        <div id="ss-geo-off" class="mt-4 hidden border-t border-slate-200 pt-4">
+          <p class="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 ring-1 ring-amber-200">
+            <strong>Location will not be checked.</strong> Anyone holding the QR code can check in from anywhere, so only share it with your class (for example, in an online meeting). The 10-second rotating code, one-phone-per-student lock and enrollment check still apply.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <button type="button" data-close-modal="start-session-modal" class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</button>
+      <button type="submit" id="ss-submit" disabled class="rounded-lg bg-brand-700 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50">Start &amp; project QR</button>
+    </div>
+  </form>
+</div>
+
+<script>
+(function () {
+  const form = document.getElementById('start-session-form');
+  if (!form) return;
+  const el = id => document.getElementById(id);
+  let fix = null;
+
+  const geoOn = () => el('ss-geo-toggle').checked;
+
+  // "Mark as late after": 10 / 15 / 30 minutes or a custom value (1–180, shorter than the duration).
+  function lateMinutes() {
+    if (el('ss-late').value !== 'custom') return +el('ss-late').value;
+    const v = el('ss-late-custom').value.trim();
+    return /^\d+$/.test(v) ? +v : NaN;
+  }
+  function lateError() {
+    const m = lateMinutes(), dur = +el('ss-duration').value;
+    if (!Number.isInteger(m) || m < 1 || m > 180) return 'Enter a whole number of minutes from 1 to 180.';
+    if (m >= dur) return 'Must be shorter than the session duration.';
+    return '';
+  }
+  function applyLate() {
+    el('ss-late-custom-wrap').classList.toggle('hidden', el('ss-late').value !== 'custom');
+    const err = lateError();
+    el('ss-late-hint').textContent = err || 'Scans after this many minutes from the start are marked late.';
+    el('ss-late-hint').className = 'mt-1 text-xs ' + (err ? 'text-rose-600' : 'text-slate-500');
+    updateSubmit();
+  }
+  el('ss-late').addEventListener('change', () => { applyLate(); if (el('ss-late').value === 'custom') el('ss-late-custom').focus(); });
+  el('ss-late-custom').addEventListener('input', applyLate);
+  el('ss-duration').addEventListener('change', applyLate);
+
+  const updateSubmit = () => { el('ss-submit').disabled = (geoOn() && !fix) || !!lateError(); };
+
+  function setGps(state, title, sub) {
+    el('ss-gps-dot').className = 'h-3 w-3 shrink-0 rounded-full ' + ({ wait: 'bg-amber-400 animate-pulse', ok: 'bg-emerald-500', err: 'bg-rose-500' }[state]);
+    el('ss-gps-title').textContent = title;
+    el('ss-gps-sub').textContent = sub;
+    updateSubmit();
+  }
+
+  function capture() {
+    fix = null;
+    setGps('wait', 'Capturing your location…', 'Allow location access so students can be geofenced.');
+    const fail = (t, s) => setGps('err', t, s + ' You can also turn geofencing off above.');
+    if (!('geolocation' in navigator)) return fail('Geolocation unavailable', 'This browser does not support GPS.');
+    if (!window.isSecureContext) return fail('HTTPS required for GPS', 'Open the site over HTTPS (or localhost) to enable location.');
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        fix = { latitude: +pos.coords.latitude.toFixed(6), longitude: +pos.coords.longitude.toFixed(6), accuracy: pos.coords.accuracy };
+        const warn = pos.coords.accuracy > 50 ? ' – low accuracy, consider a larger radius' : '';
+        setGps('ok', 'Location locked', `${fix.latitude}, ${fix.longitude} (±${Math.round(fix.accuracy)} m${warn})`);
+      },
+      err => fail('Could not get location', err.message || 'Permission denied.'),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  }
+
+  function applyGeoState() {
+    const on = geoOn();
+    el('ss-geo-on').classList.toggle('hidden', !on);
+    el('ss-geo-off').classList.toggle('hidden', on);
+    if (on && !fix) capture();     // switched back on without a fix yet
+    updateSubmit();
+  }
+  el('ss-geo-toggle').addEventListener('change', applyGeoState);
+
+  window.openStartSession = function (subjectId) {
+    if (subjectId) el('ss-subject').value = String(subjectId);
+    el('ss-geo-toggle').checked = true;   // safe default: geofencing ON for every new session
+    fix = null;
+    el('ss-late').value = '15'; el('ss-late-custom').value = '';
+    applyLate();
+    applyGeoState();
+    SA.openModal('start-session-modal');
+  };
+  document.querySelectorAll('[data-start-session]').forEach(b =>
+    b.addEventListener('click', () => window.openStartSession(b.dataset.startSession)));
+  el('ss-gps-retry').addEventListener('click', capture);
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const on = geoOn();
+    if ((on && !fix) || lateError()) return;
+    const btn = el('ss-submit');
+    btn.disabled = true; btn.textContent = 'Starting…';
+    const body = {
+      subject_id: +el('ss-subject').value,
+      session_title: el('ss-title').value.trim(),
+      duration_minutes: +el('ss-duration').value,
+      geofence_enabled: on,
+      late_after_minutes: lateMinutes(),
+      // radius / coordinates only matter (and are only stored) when geofencing is on
+      allowed_radius_meters: on ? (+el('ss-radius').value || 40) : 40,
+      latitude: on ? fix.latitude : null,
+      longitude: on ? fix.longitude : null,
+    };
+    const r = await SA.api('/api/sessions/start/', { method: 'POST', body });
+    if (r.ok) { window.location.href = r.data.redirect; return; }
+    SA.toast(SA.errorText(r.data), 'error');
+    btn.textContent = 'Start & project QR'; updateSubmit();
+  });
+})();
+</script>

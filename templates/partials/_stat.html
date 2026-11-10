@@ -1,0 +1,8 @@
+<div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+  <div class="flex items-center justify-between">
+    <p class="text-sm font-medium text-slate-500">{{ label }}</p>
+    <span class="flex h-9 w-9 items-center justify-center rounded-lg {{ tone|default:'bg-brand-50 text-brand-700' }} text-lg">{{ icon|default:'•' }}</span>
+  </div>
+  <p class="mt-2 text-3xl font-extrabold tracking-tight text-slate-900">{{ value }}</p>
+  {% if sub %}<p class="mt-1 text-xs text-slate-500">{{ sub }}</p>{% endif %}
+</div>

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load sa_tags %}
+{% block title %}Audit log{% endblock %}
+{% block content %}
+<p class="text-sm font-medium text-brand-700">Superadmin</p>
+<h1 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Audit scan log</h1>
+<p class="mt-1 text-sm text-slate-500">Every rejected scan — expired tokens, closed sessions, device mismatches, geofence violations and unenrolled scans.</p>
+
+<form method="get" class="mt-6 flex flex-col gap-2 sm:flex-row">
+  <input name="q" value="{{ q }}" placeholder="Search student, ID or subject code" class="w-full rounded-lg border-slate-300 text-sm focus:border-brand-600 focus:ring-brand-600 sm:w-80">
+  <select name="reason" class="rounded-lg border-slate-300 text-sm focus:border-brand-600 focus:ring-brand-600">
+    <option value="">All reasons</option>
+    {% for val, label in reasons %}<option value="{{ val }}" {% if reason == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <button class="rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800">Filter</button>
+  {% if q or reason %}<a href="{% url 'admin_audit' %}" class="rounded-lg px-4 py-2 text-center text-sm font-medium text-slate-600 hover:bg-slate-100">Clear</a>{% endif %}
+</form>
+
+<div class="mt-4 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+  {% include "admin_panel/_audit_table.html" with logs=page.object_list %}
+  {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}
